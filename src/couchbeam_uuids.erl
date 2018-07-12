@@ -123,7 +123,7 @@ get_new_uuids(#server{url=ServerUrl, options=Opts}=Server, Backoff, Acc) ->
     case couchbeam_httpc:request(get, Url, [], <<>>, Opts) of
         {ok, 200, _, Ref} ->
             {ok, Body} = hackney:body(Ref),
-            {[{<<"uuids">>, Uuids}]} = couchbeam_ejson:decode(Body),
+            Uuids = get_uuids_from_body(Body),
             ServerUuids = #server_uuids{server_url=ServerUrl,
                                         uuids=(Acc ++ Uuids)},
             ets:insert(couchbeam_uuids, ServerUuids),
@@ -154,3 +154,14 @@ utc_suffix(Suffix) ->
     Then = calendar:datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}),
     Prefix = io_lib:format("~14.16.0b", [(Nowsecs - Then) * 1000000 + Micro]),
     list_to_binary(Prefix ++ Suffix).
+
+
+-ifndef('RETURN_MAPS').
+get_uuids_from_body(Body) ->
+    {[{<<"uuids">>, Uuids}]} = couchbeam_ejson:decode(Body),
+    Uuids.
+-else.
+get_uuids_from_body(Body) ->
+  #{<<"uuids">>:=Uuids} = couchbeam_ejson:decode(Body),
+    Uuids.
+-endif.

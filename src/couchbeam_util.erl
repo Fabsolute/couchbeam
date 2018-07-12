@@ -138,6 +138,10 @@ get_value(Key, Prop) ->
     get_value(Key, Prop, undefined).
 
 -spec get_value(Key :: term(), Prop :: [term()], Default :: term()) -> term().
+get_value(Key,Map,Default) when is_map(Map)->
+    maps:get(Key,Map,Default);
+get_value(Key,{Prop},Default)->
+    get_value(Key,Prop,Default);
 get_value(Key, Prop, Default) ->
     case lists:keyfind(Key, 1, Prop) of
 	false ->

@@ -64,13 +64,37 @@ fetch(Db, ViewName) ->
 %% options.</p>
 %% <p>Return: {ok, Rows} or {error, Rows, Error}</p>
 fetch(Db, ViewName, Options) ->
-    case stream(Db, ViewName, Options) of
-        {ok, Ref} ->
-            collect_view_results(Ref, []);
-        Error ->
-            Error
-    end.
+  case stream(Db, ViewName, Options) of
+    {ok, Ref} ->
+      case collect_view_results(Ref, []) of
+        {ok, Rows} ->
+          case ?USE_MAPS of
+            false ->
+              {ok, Rows};
+            true ->
+              {ok, convert_ejson_list_to_maps(Rows, [])}
+          end;
+        Otherwise ->
+          Otherwise
+      end;
+    Error ->
+      Error
+  end.
 
+convert_ejson_list_to_maps([], Acc) ->
+  Acc;
+convert_ejson_list_to_maps([JsonObject | T], Acc) ->
+  convert_ejson_list_to_maps(T, Acc ++ [convert_ejson_to_map(JsonObject)]).
+
+convert_ejson_to_map({Props}) when is_list(Props) ->
+  convert_ejson_to_map(Props, maps:new());
+convert_ejson_to_map(Value) ->
+  Value.
+
+convert_ejson_to_map([], Acc) ->
+  Acc;
+convert_ejson_to_map([{Key, Value} | T], Acc) ->
+  convert_ejson_to_map(T, Acc#{Key=>convert_ejson_to_map(Value)}).
 
 -spec stream(Db::db(), ViewName::'all_docs' | {DesignName::string(),
         ViewName::string()}) -> {ok, StartRef::term(),

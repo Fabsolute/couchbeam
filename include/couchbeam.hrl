@@ -154,3 +154,9 @@
 
 -define(DEPRECATED(Old, New, When),
     couchbeam_util:deprecated(Old, New, When)).
+
+-ifndef('RETURN_MAPS').
+-define(USE_MAPS, false).
+-else.
+-define(USE_MAPS, true).
+-endif.

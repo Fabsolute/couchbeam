@@ -42,7 +42,9 @@ is_saved(Doc) ->
 %% @doc set a value for a key in jsonobj. If key exists it will be updated.
 set_value(Key, Value, JsonObj) when is_list(Key)->
     set_value(list_to_binary(Key), Value, JsonObj);
-set_value(Key, Value, JsonObj) when is_binary(Key) ->
+set_value(Key, Value, Map) when is_binary(Key), is_map(Map) ->
+  Map#{Key=>Value};
+set_value(Key, Value, {JsonObj}) when is_binary(Key) ->
     {Props} = JsonObj,
     case proplists:is_defined(Key, Props) of
         true -> set_value1(Props, Key, Value, []);
@@ -63,8 +65,7 @@ get_value(Key, JsonObj) ->
 get_value(Key, JsonObj, Default) when is_list(Key) ->
     get_value(list_to_binary(Key), JsonObj, Default);
 get_value(Key, JsonObj, Default) when is_binary(Key) ->
-    {Props} = JsonObj,
-    couchbeam_util:get_value(Key, Props, Default).
+    couchbeam_util:get_value(Key, JsonObj, Default).
 
 
 %% @spec take_value(Key::key_val(), JsonObj::json_obj()) -> {term(), json_obj()}
